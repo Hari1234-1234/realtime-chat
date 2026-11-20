@@ -1,0 +1,75 @@
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL")
+}
+
+model User {
+    id               String   @id @default(cuid())
+    name             String
+    email            String   @unique
+    passwordHash     String
+    createdAt        DateTime @default(now())
+    refreshTokenHash String?
+
+    memberships     ConversationMember[]
+    messages        Message[]
+    messageReceipts MessageReceipt[]
+}
+
+model Conversation {
+    id        String   @id @default(cuid())
+    title     String?
+    isGroup   Boolean  @default(false)
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    members  ConversationMember[]
+    messages Message[]
+}
+
+model ConversationMember {
+    id             String   @id @default(cuid())
+    userId         String
+    conversationId String
+    role           String   @default("MEMBER")
+    joinedAt       DateTime @default(now())
+
+    user         User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+    conversation Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+    @@unique([userId, conversationId])
+    @@index([conversationId])
+}
+
+model Message {
+    id             String   @id @default(cuid())
+    content        String
+    senderId       String
+    conversationId String
+    createdAt      DateTime @default(now())
+
+    sender       User             @relation(fields: [senderId], references: [id], onDelete: Cascade)
+    conversation Conversation     @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+    receipts     MessageReceipt[]
+
+    @@index([conversationId, createdAt])
+}
+
+model MessageReceipt {
+    id          String    @id @default(cuid())
+    messageId   String
+    userId      String
+    deliveredAt DateTime?
+    readAt      DateTime?
+
+    message Message @relation(fields: [messageId], references: [id], onDelete: Cascade)
+    user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    @@unique([messageId, userId])
+    @@index([userId, readAt])
+    @@index([messageId])
+}
