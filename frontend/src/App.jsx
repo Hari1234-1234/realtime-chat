@@ -12,7 +12,7 @@ const getInitials = (text = "") =>
     .map((part) => part[0]?.toUpperCase() || "")
     .join("") || "?";
 
-// UI-only helper: stable colour per sender name (used in group chats).
+// UI-only helper: stable colour per sender name (used in group chat).
 const NAME_COLORS = [
   "#087f73",
   "#6f4fc4",
